@@ -1,3 +1,4 @@
+import OrganizationHeader from "@/components/organizerDasboard/OrganizationHeader";
 import { Button, Card } from "@heroui/react";
 import { FaCalendarAlt, FaCrown, FaDollarSign, FaUsers } from "react-icons/fa";
 
@@ -12,6 +13,11 @@ const OrganizerOverview = () => {
   const isPremium = false;
 
   return (
+    <div>
+      <div><OrganizationHeader
+        title="Dashboard Overview"
+        description="Monitor your core metrics, organization health, and recent activities at a glance."
+      /></div>
     <div className="space-y-6 mt-6 ">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="glass border-white/5" radius="lg">
@@ -85,6 +91,7 @@ const OrganizerOverview = () => {
           </div>
         </Card>
       )}
+    </div>
     </div>
   );
 };
