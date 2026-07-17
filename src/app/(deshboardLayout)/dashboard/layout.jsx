@@ -16,7 +16,7 @@ const dashboardLayout = ({ children }) => {
         <OrganizerSidebar></OrganizerSidebar>
       </aside>
 
-      <aside className="bg-[#060607">{children}</aside>
+      <aside className="bg-[#060607 px-5 py-3 w-full">{children}</aside>
     </div>
   );
 };

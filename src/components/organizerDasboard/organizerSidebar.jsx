@@ -1,33 +1,107 @@
-"use client"
-import React from 'react';
+"use client";
+import React from "react";
 import Logo from "@/components/Logo";
 import Image from "next/image";
 import Link from "next/link";
-import { FaBuilding, FaCalendarAlt, FaHome, FaPlus, FaSignOutAlt, FaUsers } from "react-icons/fa";
-import { authClient, useSession } from '@/lib/auth-client';
-import { Button } from '@heroui/react';
-import { useRouter } from 'next/navigation';
+import {
+  FaBuilding,
+  FaCalendarAlt,
+  FaHistory,
+  FaHome,
+  FaPlus,
+  FaSignOutAlt,
+  FaTicketAlt,
+  FaUserCircle,
+  FaUsers,
+  FaUserShield,
+} from "react-icons/fa";
+import { authClient, useSession } from "@/lib/auth-client";
+import { Button } from "@heroui/react";
+import { useRouter } from "next/navigation";
 
 const OrganizerSidebar = () => {
-  const router=useRouter();
-  const handleLogout= async()=>{
+  const router = useRouter();
+  const handleLogout = async () => {
     await authClient.signOut();
-    router.refresh()
-
-
-  }
-    const{data:session}=useSession();
-    const role=session?.user?.role;
-    const user=session?.user
-    const  organizerMenu= [
-        { key: "overview", label: "Overview", icon: FaUsers },
-        { key: "organization", label: "Organization", icon: FaBuilding },
-        { key: "add-event", label: "Add Event", icon: FaPlus },
-        { key: "manage-events", label: "Manage Events", icon: FaCalendarAlt },
-        { key: "attendees", label: "Attendees", icon: FaUsers },
-      ]
-    return (
-         <div className="h-full flex flex-col bg-slate-950/80 backdrop-blur-xl">
+    router.push("/login");
+  };
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+  const user = session?.user;
+  const organizerMenu = [
+    {
+      key: "overview",
+      label: "Overview",
+      icon: FaUsers,
+      href: "/dashboard/organizer",
+    },
+    {
+      key: "organization",
+      label: "Organization",
+      icon: FaBuilding,
+      href: "/dashboard/organization",
+    },
+    {
+      key: "add-event",
+      label: "Add Event",
+      icon: FaPlus,
+      href: "/dashboard/add-event",
+    },
+    {
+      key: "manage-events",
+      label: "Manage Events",
+      icon: FaCalendarAlt,
+      href: "/dashboard/manage-events",
+    },
+    {
+      key: "attendees",
+      label: "Attendees",
+      icon: FaUsers,
+      href: "/dashboard/attendees",
+    },
+  ];
+  const attendeeMenu = [
+    {
+      key: "overview",
+      label: "Overview",
+      icon: FaUserCircle,
+      href: "/dashboard/attendee",
+    },
+    {
+      key: "tickets",
+      label: "My Tickets",
+      icon: FaTicketAlt,
+      href: "/dashboard/tickets",
+    },
+    {
+      key: "payments",
+      label: "Payments",
+      icon: FaHistory,
+      href: "/dashboard/payments",
+    },
+  ];
+  const adminMenu = [
+    {
+      key: "users",
+      label: "Users",
+      icon: FaUserShield,
+      href: "/dashboard/users",
+    },
+    {
+      key: "events",
+      label: "Approve Events",
+      icon: FaCalendarAlt,
+      href: "/dashboard/events",
+    },
+    {
+      key: "transactions",
+      label: "Transaction Logs",
+      icon: FaHistory,
+      href: "/dashboard/transactions",
+    },
+  ];
+  return (
+    <div className="h-full flex flex-col bg-slate-950/80 backdrop-blur-xl">
       {/* Brand / Logo */}
       <div className="px-6 py-4 border-b border-white/5">
         <Logo />
@@ -49,7 +123,9 @@ const OrganizerSidebar = () => {
             <p className="text-white text-sm font-bold truncate leading-tight">
               {user?.name}
             </p>
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${role === "admin" ? "text-yellow-400" : role === "organizer" ? "text-indigo-400" : "text-pink-400"}`}>
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider ${role === "admin" ? "text-yellow-400" : role === "organizer" ? "text-indigo-400" : "text-pink-400"}`}
+            >
               {role}
             </span>
           </div>
@@ -58,7 +134,9 @@ const OrganizerSidebar = () => {
 
       {/* Navigation Menu */}
       <nav className="flex-grow overflow-y-auto px-3 py-4 space-y-1">
-        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest px-3 pb-2">Navigation</p>
+        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest px-3 pb-2">
+          Navigation
+        </p>
 
         {/* {organizerMenu.map(({ key, label, icon: Icon }) => {
           const targetPath = getPath(key);
@@ -81,24 +159,33 @@ const OrganizerSidebar = () => {
           );
         })} */}
 
-        <div className='flex flex-col'>
-  {
-    organizerMenu.map(item => (
-      <Link  
-        href={"/"} 
-        key={item.key} 
-        className='w-full mt-2 flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold cursor-pointer text-left hover:bg-[#27272A] transition-colors duration-200 ease-in-out'
-      >
-        {item?.label}
-      </Link>
-    ))
-  }
-</div>
+        <div className="flex flex-col">
+          {(role === "attendee"
+            ? attendeeMenu
+            : role === "organizer"
+              ? organizerMenu
+              : adminMenu
+          ).map(({ href, key, label, icon: Icon }) => (
+            <Link
+              href={href}
+              key={key}
+              className="w-full mt-2 flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold cursor-pointer text-left hover:bg-[#27272A] transition-colors duration-200 ease-in-out"
+            >
+              <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                <Icon size={16} className="transition-colors duration-200" />
+              </span>
+              {label}
+            </Link>
+          ))}
+        </div>
       </nav>
 
       {/* Bottom Links */}
       <div className="px-3 py-4 border-t border-white/5 space-y-1">
-        <Link href="/" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-150">
+        <Link
+          href="/"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-150"
+        >
           <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
             <FaHome size={13} />
           </span>
@@ -115,7 +202,7 @@ const OrganizerSidebar = () => {
         </button>
       </div>
     </div>
-    );
+  );
 };
 
 export default OrganizerSidebar;
