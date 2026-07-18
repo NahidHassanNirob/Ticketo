@@ -1,233 +1,353 @@
 "use client";
 import OrganizationHeader from "@/components/organizerDasboard/OrganizationHeader";
-import { Card, CardHeader, Form, TextArea, Input, Button } from "@heroui/react";
-import Image from "next/image";
+import { Button, Card, CardHeader, Input } from "@heroui/react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Upload } from "lucide-react";
+import Image from "next/image";
 import { uplodeImage } from "../../../../../../utils/imageUplode";
-import { useSession } from "@/lib/auth-client";
-import { addOrganization } from "@/lib/api/organization/action";
+import { addEvent } from "@/lib/api/event/action";
 import toast from "react-hot-toast";
 
-const OrganizationAddEventPage = () => {
-  const { data: session } = useSession();
-  const [imagePreview, setImagePreview] = useState(null);
-  const [fileName, setFileName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+const AddEventPage = () => {
   const {
-    handleSubmit,
     register,
+    handleSubmit,
     formState: { errors },
     reset,
   } = useForm();
 
+  const [imagePreview, setImagePreview] = useState(null);
+  const [fileName, setFileName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImagePreview(URL.createObjectURL(file));
       setFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-    const toastId = toast.loading("Creating organization...");
-
     try {
-      const imageFile = data.organizationLogo[0];
+      const imageFile = data.eventBanner[0];
 
       const imageUrl = await uplodeImage(imageFile);
+      console.log("Selected Image File:", imageUrl);
+      console.log("Other Form Data:", data);
 
-      if (!imageUrl) {
-        throw new Error("Image upload failed");
-      }
-
-      const newData = {
-        organizationName: data.organizationName,
-        description: data.Description,
-        logo: imageUrl,
-        website: data.organizationWebsite,
-        organizationEmail: session?.user?.email,
+      const eventData = {
+        title: data.title,
+        banner: imageUrl,
+        category: data.category,
+        location: data.location,
+        date: data.date,
+        ticketPrice: data.price,
+        availableSeats: data.capacity,
+        description: data.description,
+        status: "pending",
       };
-
-      const sendData = await addOrganization(newData);
-
-      if (sendData?.success || sendData?.id || sendData) {
-        toast.success("Organization added successfully!", { id: toastId });
-
+      const sendData = await addEvent(eventData);
+      if (sendData) {
+        toast.success("Event successfully added");
         reset();
         setImagePreview(null);
         setFileName("");
-      } else {
-        throw new Error(sendData?.message || "Failed to add organization");
       }
     } catch (error) {
-      console.error("Submission error:", error);
-      toast.error(error.message || "Something went wrong!", { id: toastId });
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const logoRegister = register("organizationLogo", {
-    required: "Logo is required",
-    onChange: (e) => handleImageChange(e),
-  });
+  const CATEGORIES = [
+    "Music",
+    "Tech",
+    "Sports",
+    "Arts",
+    "Business",
+    "Food",
+    "Other",
+  ];
+  const LOCATIONS = [
+    "New York",
+    "San Francisco",
+    "London",
+    "Dhaka",
+    "Tokyo",
+    "Berlin",
+    "Online",
+  ];
 
   return (
     <div>
       <div>
         <OrganizationHeader
-          title="Create New Event"
-          description="Launch a new experience. Set up ticket pricing, schedules, and custom settings for your attendees."
+          title={"Add Event"}
+          description={"add your events"}
         />
       </div>
-      <div className="mt-6 mx-auto space-y-6 max-w-3xl">
+
+      <div className="mt-6 max-w-3xl mx-auto">
         <Card
-          className="border border-white/5 bg-slate-900/40 backdrop-blur-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden"
+          className="border border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-2xl rounded-2xl"
           radius="lg"
         >
-          <CardHeader className="flex flex-col gap-1 pb-5 border-b border-white/5 p-8 relative overflow-hidden bg-gradient-to-b from-white/[0.02] to-transparent">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-            <h3 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight">
-              Organization Details
-            </h3>
-            <p className="text-slate-400 text-xs mt-0.5">
-              Review and update your organization credentials.
+          <CardHeader className="flex flex-col gap-1 pb-4 border-b border-white/5 p-6">
+            <h3 className="text-xl font-bold text-white">Host a New Event</h3>
+            <p className="text-slate-400 text-xs">
+              Fill out the detailed event information. Banners and dates are
+              required.
             </p>
           </CardHeader>
 
-          <div className="p-8">
-            <Form
+          <div className="p-6">
+            <form
               onSubmit={handleSubmit(onSubmit)}
-              className="space-y-6 w-full"
+              className="space-y-4 w-full"
             >
-              <Input
-                {...register("organizationName", {
-                  required: "Name is required",
-                })}
-                id="organizationName"
-                label="Organization Name"
-                labelPlacement="outside"
-                placeholder="TechEvents Corp"
-                required
-                className="w-full bg-slate-950/40 border-white/10 hover:border-indigo-500/30 focus-within:!border-indigo-500 transition-colors"
-              />
-
-              <div className="flex flex-col gap-2 w-full">
-                <span className="text-sm font-medium text-slate-300">
-                  Organization Logo
-                </span>
-
-                <label
-                  htmlFor="organizationLogo"
-                  className="group w-full border border-dashed border-white/10 hover:border-indigo-500/50 bg-slate-950/40 rounded-xl p-6 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 ease-in-out relative overflow-hidden min-h-[160px]"
-                >
-                  <input
-                    type="file"
-                    id="organizationLogo"
-                    accept="image/*"
-                    className="hidden"
-                    name={logoRegister.name}
-                    ref={logoRegister.ref}
-                    onBlur={logoRegister.onBlur}
-                    onChange={logoRegister.onChange}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="event-category"
+                    className="text-sm text-white/70"
+                  >
+                    Title
+                  </label>
+                  <Input
+                    {...register("title", { required: "Title is required" })}
+                    label="Event Title"
+                    id="title"
+                    labelPlacement="outside"
+                    placeholder="e.g. Rock Fest 2026"
+                    className="w-full bg-slate-900/50 py-3 mt-1 border-white/10 hover:border-pink-500/50 focus-within:!border-pink-500"
                   />
-
-                  {!imagePreview ? (
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <svg
-                        className="w-8 h-8 text-slate-500 group-hover:text-indigo-400 transition-colors duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                        ></path>
-                      </svg>
-                      <p className="text-xs font-semibold text-slate-300">
-                        Click to upload
-                      </p>
-                      {errors.organizationLogo && (
-                        <p className="text-red-400 text-xs mt-1 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">
-                          {errors.organizationLogo.message}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 w-full h-full bg-slate-950 flex items-center justify-center p-2 transition-all duration-300">
-                      <div className="relative w-full h-full rounded-lg border border-white/10 overflow-hidden flex flex-col items-center justify-center bg-slate-900/50">
-                        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-indigo-500 rounded-tl-sm"></div>
-                        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-indigo-500 rounded-tr-sm"></div>
-                        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-indigo-500 rounded-bl-sm"></div>
-                        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-indigo-500 rounded-br-sm"></div>
-
-                        <div className="relative w-full h-full rounded-md overflow-hidden bg-slate-950/60 flex items-center justify-center shadow-lg">
-                          <Image
-                            fill
-                            unoptimized
-                            src={imagePreview}
-                            alt="Preview"
-                            className="object-contain p-4"
-                          />
-                        </div>
-
-                        <div className="absolute bottom-3 left-3 right-3 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-md border border-white/5 flex items-center justify-between gap-2 max-w-[90%] mx-auto shadow-md z-10">
-                          <span className="text-[11px] text-slate-200 font-medium truncate">
-                            {fileName}
-                          </span>
-                          <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider shrink-0 bg-indigo-500/10 px-1.5 py-0.5 rounded">
-                            Selected
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  {errors.title && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.title.message}
+                    </span>
                   )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-white/70">Event Banner</label>
+                  <div className="relative border border-dashed border-white/10 hover:border-pink-500/50 rounded-xl bg-slate-900/50 h-11 flex items-center px-3 justify-between overflow-hidden cursor-pointer">
+                    <span className="text-sm text-slate-400 truncate max-w-[200px]">
+                      {fileName || "Choose Banner Image"}
+                    </span>
+                    {imagePreview ? (
+                      <Image
+                        height={20}
+                        width={20}
+                        src={imagePreview}
+                        alt="Preview"
+                        className="h-8 w-12 object-cover rounded"
+                      />
+                    ) : (
+                      <span className="text-xs bg-white/10 text-white px-2 py-1 rounded">
+                        Browse
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      {...register("eventBanner", {
+                        required: "Banner image is required",
+                        onChange: (e) => handleImageChange(e),
+                      })}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </div>
+                  {errors.eventBanner && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.eventBanner.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Category & Location */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="flex flex-col gap-2 w-full">
+                  <label
+                    htmlFor="event-category"
+                    className="text-sm text-white/70"
+                  >
+                    Category
+                  </label>
+                  <select
+                    {...register("category", {
+                      required: "Category is required",
+                    })}
+                    id="event-category"
+                    className="w-full flex items-center justify-between bg-slate-900/50 border border-white/10 rounded-xl px-3 h-11 text-white text-sm outline-none focus:border-pink-500"
+                  >
+                    <option value="" className="bg-slate-950 text-slate-400">
+                      Select Category
+                    </option>
+                    {CATEGORIES.map((cat) => (
+                      <option
+                        key={cat}
+                        value={cat}
+                        className="bg-slate-950 text-white"
+                      >
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.category.message}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  <label
+                    htmlFor="event-location"
+                    className="text-sm text-white/70"
+                  >
+                    Location
+                  </label>
+                  <select
+                    {...register("location", {
+                      required: "Location is required",
+                    })}
+                    id="event-location"
+                    className="w-full flex items-center justify-between bg-slate-900/50 border border-white/10 rounded-xl px-3 h-11 text-white text-sm outline-none focus:border-pink-500"
+                  >
+                    <option value="" className="bg-slate-950 text-slate-400">
+                      Select Location
+                    </option>
+                    {LOCATIONS.map((loc) => (
+                      <option
+                        key={loc}
+                        value={loc}
+                        className="bg-slate-950 text-white"
+                      >
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.location && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.location.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Date, Price & Capacity */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="event-date" className="text-sm text-white/70">
+                    Date
+                  </label>
+                  <Input
+                    {...register("date", { required: "Date is required" })}
+                    id="event-date"
+                    type="date"
+                    label="Date"
+                    labelPlacement="outside"
+                    className="w-full bg-slate-900/50 border-white/10 hover:border-pink-500/50 focus-within:!border-pink-500"
+                  />
+                  {errors.date && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.date.message}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="event-price"
+                    className="text-sm text-white/70"
+                  >
+                    Price
+                  </label>
+                  <Input
+                    {...register("price", { required: "Price is required" })}
+                    id="event-price"
+                    type="number"
+                    min={0}
+                    step="any"
+                    label="Ticket Price ($)"
+                    labelPlacement="outside"
+                    placeholder="0.00"
+                    className="w-full bg-slate-900/50 border-white/10 hover:border-pink-500/50 focus-within:!border-pink-500"
+                  />
+                  {errors.price && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.price.message}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="event-seats"
+                    className="text-sm text-white/70"
+                  >
+                    Capacity
+                  </label>
+                  <Input
+                    {...register("capacity", {
+                      required: "Capacity is required",
+                    })}
+                    id="event-seats"
+                    type="number"
+                    min={1}
+                    label="Available Capacity"
+                    labelPlacement="outside"
+                    placeholder="100"
+                    className="w-full bg-slate-900/50 border-white/10 hover:border-pink-500/50 focus-within:!border-pink-500"
+                  />
+                  {errors.capacity && (
+                    <span className="text-xs text-red-500 pl-1">
+                      {errors.capacity.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="flex flex-col gap-2 w-full">
+                <label htmlFor="event-desc" className="text-sm text-white/70">
+                  Detailed Description
                 </label>
+                <textarea
+                  {...register("description", {
+                    required: "Description is required",
+                  })}
+                  id="event-desc"
+                  placeholder="Outline the detailed schedule, speaker list, and amenities..."
+                  className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-pink-500 min-h-[120px] text-white text-sm"
+                />
+                {errors.description && (
+                  <span className="text-xs text-red-500 pl-1">
+                    {errors.description.message}
+                  </span>
+                )}
               </div>
 
-              <Input
-                {...register("organizationWebsite", {
-                  required: "Website is required",
-                })}
-                type="text"
-                id="organizationWebsite"
-                label="Organization Website"
-                labelPlacement="outside"
-                placeholder="https://techevents.corp"
-                required
-                className="w-full bg-slate-950/40 border-white/10 hover:border-indigo-500/30 focus-within:!border-indigo-500 transition-colors"
-              />
-
-              <TextArea
-                {...register("Description", {
-                  required: "Description is required",
-                })}
-                id="Description"
-                label="Description"
-                labelPlacement="outside"
-                placeholder="Hosting global developer conferences and software hacking marathons."
-                required
-                className="w-full bg-slate-950/40 border-white/10 hover:border-indigo-500/30 focus-within:!border-indigo-500 transition-colors min-h-[120px] text-white text-sm"
-              />
-
-              <div className="flex gap-4 pt-2">
-                <Button
-                  type="submit"
-                  isLoading={isSubmitting}
-                  disabled={isSubmitting}
-                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold h-11 px-8 shadow-[0_4px_20px_rgba(79,70,229,0.3)] transition-all duration-300 rounded-xl"
-                >
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            </Form>
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-pink-500 to-indigo-600 text-white font-bold h-11 px-6 shadow-lg shadow-pink-500/10"
+                radius="lg"
+              >
+                {isSubmitting ? "Hosting..." : "Host Event Now"}
+              </Button>
+            </form>
           </div>
         </Card>
       </div>
@@ -235,4 +355,4 @@ const OrganizationAddEventPage = () => {
   );
 };
 
-export default OrganizationAddEventPage;
+export default AddEventPage;

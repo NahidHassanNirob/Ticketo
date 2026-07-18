@@ -48,7 +48,7 @@ const OrganizationPage = () => {
         const imageFile = data.organizationLogo[0];
         imageUrl = await uplodeImage(imageFile);
         if (!imageUrl) throw new Error("Image upload failed");
-      }
+      } 
 
       const newData = {
         organizationName: data.organizationName,

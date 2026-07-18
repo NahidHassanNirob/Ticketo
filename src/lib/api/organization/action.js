@@ -8,7 +8,6 @@ export const addOrganization=async(data)=>{
 }
 export const updateOrganization=async(data,id)=>{
     console.log(data,id);
-    // return;
     const res= await serverMutation(`api/organization/${id}`,"PATCH",data)
     return res;
 }
