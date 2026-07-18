@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import OrganizationHeader from "@/components/organizerDasboard/OrganizationHeader";
 import { Card, CardHeader, Form, TextArea, Input, Button } from "@heroui/react";
 import Image from "next/image";
@@ -6,16 +6,20 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { uplodeImage } from "../../../../../../utils/imageUplode";
 import { useSession } from "@/lib/auth-client";
+import { addOrganization } from "@/lib/api/organization/action";
+import toast from "react-hot-toast";
 
 const OrganizationAddEventPage = () => {
-  const {data:session}=useSession()
+  const { data: session } = useSession();
   const [imagePreview, setImagePreview] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { 
-    handleSubmit, 
-    register, 
-    formState: { errors }
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+    reset,
   } = useForm();
 
   const handleImageChange = (e) => {
@@ -26,24 +30,49 @@ const OrganizationAddEventPage = () => {
     }
   };
 
-  const onSubmit = async(data) => {
-    const imageFile=data.organizationLogo[0]
-    const imageUrl=await uplodeImage(imageFile)
-    const newData={
-      organizationName:data.organizationName,
-      description:data.Description,
-      logo:imageUrl,
-      organizationName:data.organizationName,
-      website:data.organizationWebsite,
-      email:session?.user?.email
-    }
-  
-  };
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+    const toastId = toast.loading("Creating organization...");
 
+    try {
+      const imageFile = data.organizationLogo[0];
+
+      const imageUrl = await uplodeImage(imageFile);
+
+      if (!imageUrl) {
+        throw new Error("Image upload failed");
+      }
+
+      const newData = {
+        organizationName: data.organizationName,
+        description: data.Description,
+        logo: imageUrl,
+        website: data.organizationWebsite,
+        organizationEmail: session?.user?.email,
+      };
+
+      const sendData = await addOrganization(newData);
+
+      if (sendData?.success || sendData?.id || sendData) {
+        toast.success("Organization added successfully!", { id: toastId });
+
+        reset();
+        setImagePreview(null);
+        setFileName("");
+      } else {
+        throw new Error(sendData?.message || "Failed to add organization");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error(error.message || "Something went wrong!", { id: toastId });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const logoRegister = register("organizationLogo", {
     required: "Logo is required",
-    onChange: (e) => handleImageChange(e)
+    onChange: (e) => handleImageChange(e),
   });
 
   return (
@@ -70,9 +99,14 @@ const OrganizationAddEventPage = () => {
           </CardHeader>
 
           <div className="p-8">
-            <Form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
+            <Form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-6 w-full"
+            >
               <Input
-              {...register("organizationName", {required:"Name is required"})}
+                {...register("organizationName", {
+                  required: "Name is required",
+                })}
                 id="organizationName"
                 label="Organization Name"
                 labelPlacement="outside"
@@ -85,9 +119,9 @@ const OrganizationAddEventPage = () => {
                 <span className="text-sm font-medium text-slate-300">
                   Organization Logo
                 </span>
-                
-                <label 
-                  htmlFor="organizationLogo" 
+
+                <label
+                  htmlFor="organizationLogo"
                   className="group w-full border border-dashed border-white/10 hover:border-indigo-500/50 bg-slate-950/40 rounded-xl p-6 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 ease-in-out relative overflow-hidden min-h-[160px]"
                 >
                   <input
@@ -118,7 +152,7 @@ const OrganizationAddEventPage = () => {
                         ></path>
                       </svg>
                       <p className="text-xs font-semibold text-slate-300">
-                        Click to upload 
+                        Click to upload
                       </p>
                       {errors.organizationLogo && (
                         <p className="text-red-400 text-xs mt-1 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">
@@ -129,7 +163,6 @@ const OrganizationAddEventPage = () => {
                   ) : (
                     <div className="absolute inset-0 w-full h-full bg-slate-950 flex items-center justify-center p-2 transition-all duration-300">
                       <div className="relative w-full h-full rounded-lg border border-white/10 overflow-hidden flex flex-col items-center justify-center bg-slate-900/50">
-                        
                         <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-indigo-500 rounded-tl-sm"></div>
                         <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-indigo-500 rounded-tr-sm"></div>
                         <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-indigo-500 rounded-bl-sm"></div>
@@ -139,12 +172,12 @@ const OrganizationAddEventPage = () => {
                           <Image
                             fill
                             unoptimized
-                            src={imagePreview} 
-                            alt="Preview" 
+                            src={imagePreview}
+                            alt="Preview"
                             className="object-contain p-4"
                           />
                         </div>
-                        
+
                         <div className="absolute bottom-3 left-3 right-3 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-md border border-white/5 flex items-center justify-between gap-2 max-w-[90%] mx-auto shadow-md z-10">
                           <span className="text-[11px] text-slate-200 font-medium truncate">
                             {fileName}
@@ -160,7 +193,9 @@ const OrganizationAddEventPage = () => {
               </div>
 
               <Input
-               {...register("organizationWebsite", {required:"website is required"})}
+                {...register("organizationWebsite", {
+                  required: "Website is required",
+                })}
                 type="text"
                 id="organizationWebsite"
                 label="Organization Website"
@@ -171,7 +206,9 @@ const OrganizationAddEventPage = () => {
               />
 
               <TextArea
-                {...register("Description", {required:"website is required"})}
+                {...register("Description", {
+                  required: "Description is required",
+                })}
                 id="Description"
                 label="Description"
                 labelPlacement="outside"
@@ -183,9 +220,11 @@ const OrganizationAddEventPage = () => {
               <div className="flex gap-4 pt-2">
                 <Button
                   type="submit"
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
                   className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold h-11 px-8 shadow-[0_4px_20px_rgba(79,70,229,0.3)] transition-all duration-300 rounded-xl"
                 >
-                  Save Changes
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </Form>
