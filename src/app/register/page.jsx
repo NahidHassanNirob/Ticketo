@@ -34,22 +34,32 @@ export default function RegisterPage() {
   const router=useRouter()
 
   const onSubmit = async (data) => {
-    // console.log(data.image,"data here");
-    const imageFile=data.image[0]
-    const imageUrl=await uplodeImage(imageFile);
-    const { data: signupData, error } = await authClient.signUp.email({
-      
-      name:data.name,
-      email:data.email,
-      image:imageUrl,
-      password:data.password,
-      role:data.role
-    });
-    if(error){
-      toast.error(error.message)
+    let imageUrl = ""; 
+
+    try {
+      const imageFile = data.image[0];
+      if (imageFile) {
+        imageUrl = await uplodeImage(imageFile);
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      toast.error("Image upload failed. Please try again.");
+      return; 
     }
-    else{
-      router.push("/")
+    
+    
+    const { data: signupData, error } = await authClient.signUp.email({
+      name: data.name,
+      email: data.email,
+      image: imageUrl, // এখন এটি সঠিকভাবে ভ্যালু পাবে
+      password: data.password,
+      role: data.role
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      router.push("/");
     }
   };
 

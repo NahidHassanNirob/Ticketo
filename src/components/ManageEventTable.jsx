@@ -1,3 +1,6 @@
+import { Card, Chip, TableBody, TableCell, TableColumn, TableContent, TableHeader, TableRow } from "@heroui/react"
+import { Table } from "lucide-react"
+
 const ManageEventTable = () => {
     return (
         <div className="mt-6">
@@ -39,3 +42,4 @@ const ManageEventTable = () => {
         </div>
     )
 }
+export 

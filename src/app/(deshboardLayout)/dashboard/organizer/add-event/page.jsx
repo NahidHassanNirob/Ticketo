@@ -8,6 +8,7 @@ import Image from "next/image";
 import { uplodeImage } from "../../../../../../utils/imageUplode";
 import { addEvent } from "@/lib/api/event/action";
 import toast from "react-hot-toast";
+import { useSession } from "@/lib/auth-client";
 
 const AddEventPage = () => {
   const {
@@ -20,6 +21,7 @@ const AddEventPage = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [fileName, setFileName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {data:session}=useSession();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -51,10 +53,11 @@ const AddEventPage = () => {
         ticketPrice: data.price,
         availableSeats: data.capacity,
         description: data.description,
+        organizationEmail:session?.user?.email,
         status: "pending",
       };
       const sendData = await addEvent(eventData);
-      if (sendData) {
+      if (sendData.insertedId) {
         toast.success("Event successfully added");
         reset();
         setImagePreview(null);
