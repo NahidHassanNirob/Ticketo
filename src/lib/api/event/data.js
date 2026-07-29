@@ -1,5 +1,6 @@
+import { serverFetch } from "../server";
+
 export const getEvents=async(email)=>{
-    console.log(email,"email")
-    const res=await fetch(`http://localhost:8000/api/events/${email}`);
-    return res.json();
+    const res=await serverFetch(`api/events/${email}`);
+    return res;
 }

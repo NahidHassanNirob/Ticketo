@@ -1,5 +1,7 @@
 "use client";
+import { DeleteEventModal } from "@/components/organizerDasboard/DeleteEventModal";
 import OrganizationHeader from "@/components/organizerDasboard/OrganizationHeader";
+import { UpdateEventModal } from "@/components/organizerDasboard/UpdateEventModal";
 import { getEvents } from "@/lib/api/event/data";
 import { useSession } from "@/lib/auth-client";
 import {
@@ -14,15 +16,20 @@ import {
   Spinner,
   TableContent,
   Tooltip,
-  Button
+  Button,
 } from "@heroui/react";
-import { Trash2,SquarePen } from "lucide-react";
+import { Trash2, SquarePen } from "lucide-react";
 import React, { useEffect, useState } from "react";
+
 
 const OrganizationManageEvent = () => {
   const { data: session } = useSession();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [openModal,setOpenModal]=useState(false)
+  const [openDeleteModal,setOpenDeleteModal]=useState(false)
+  const [deleteEvent,setDeleteEvent]=useState("");
+  const [event,setEvent]=useState({})
   useEffect(() => {
     const getEvent = async () => {
       setLoading(true);
@@ -32,20 +39,18 @@ const OrganizationManageEvent = () => {
     };
     getEvent();
   }, [session]);
-  console.log(events);
 
   const handleDelete = (eventId) => {
+    setOpenDeleteModal(true);
+    setDeleteEvent(eventId)
     
-    console.log("Delete event:", eventId);
-  };
- 
-  const handleEdit = (eventId) => {
-    
-    console.log("Edit event:", eventId);
   };
 
-  // const events=await getEvents();
-  // console.log(events,"events are ");
+  const handleEdit = (event) => {
+    setEvent(event)
+    setOpenModal(true)
+    
+  };
 
   return (
     <div>
@@ -63,7 +68,7 @@ const OrganizationManageEvent = () => {
                   <Spinner size="lg"></Spinner>
                 </div>
               ) : (
-                <Table aria-label="Manage Events Table" removeWrapper>
+                <Table aria-label="Manage Events Table">
                   <TableContent>
                     <TableHeader className="bg-slate-950/40 border-b border-white/5 rounded-t-xl">
                       <TableColumn
@@ -87,7 +92,7 @@ const OrganizationManageEvent = () => {
                       <TableColumn className="py-4 px-6 text-slate-400 font-extrabold uppercase text-[11px] tracking-wider border-b border-white/5 bg-slate-950/20">
                         STATUS
                       </TableColumn>
-                       <TableColumn className="py-4 px-6 text-slate-400 font-extrabold uppercase text-[11px] tracking-wider border-b border-white/5 bg-slate-950/20">
+                      <TableColumn className="py-4 px-6 text-slate-400 font-extrabold uppercase text-[11px] tracking-wider border-b border-white/5 bg-slate-950/20">
                         ACTION
                       </TableColumn>
                     </TableHeader>
@@ -97,36 +102,30 @@ const OrganizationManageEvent = () => {
                           key={event._id || event.id}
                           className="border-b border-white/5 hover:bg-white/5 transition-colors duration-150 last:border-b-0"
                         >
-                          
                           <TableCell className="py-4 px-6 align-middle font-bold text-white">
                             <span className="line-clamp-1 truncate max-w-[150px]">
                               {event?.title || "Untitled"}
                             </span>
                           </TableCell>
 
-                         
                           <TableCell className="py-4 px-6 align-middle text-slate-300 font-medium">
                             {event?.category || "N/A"}
                           </TableCell>
 
-                       
                           <TableCell className="py-4 px-6 align-middle text-slate-300 font-medium">
                             {event?.date
                               ? new Date(event.date).toLocaleDateString()
                               : "N/A"}
                           </TableCell>
 
-                          
                           <TableCell className="py-4 px-6 align-middle font-semibold text-green-400">
                             ${event?.price ?? 0}
                           </TableCell>
 
-                          
                           <TableCell className="py-4 px-6 align-middle text-slate-300 font-medium">
                             {event?.availableSeats ?? event?.seats ?? 0}
                           </TableCell>
 
-                         
                           <TableCell className="py-4 px-6 align-middle">
                             <Chip
                               size="sm"
@@ -136,35 +135,34 @@ const OrganizationManageEvent = () => {
                             </Chip>
                           </TableCell>
                           <TableCell className="py-4 px-6 align-middle text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Tooltip content="Edit Event">
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="flat"
-                              className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20"
-                              onClick={() => handleEdit(event._id)}
-                            >
-                              <SquarePen className="w-4 h-4"/> 
-                            </Button>
-                          </Tooltip>
- 
-                          <Tooltip content="Delete Event" color="danger">
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="flat"
-                              className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
-                              onClick={() => handleDelete(event._id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              <Tooltip content="Edit Event">
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="flat"
+                                  className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20"
+                                  onClick={() => handleEdit(event)}
+                                >
+                                  <SquarePen className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+
+                              <Tooltip content="Delete Event" color="danger">
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="flat"
+                                  className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                                  onClick={() => handleDelete(event._id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
-                       
                     </TableBody>
                   </TableContent>
                 </Table>
@@ -173,6 +171,8 @@ const OrganizationManageEvent = () => {
           </Card>
         </div>
       </div>
+      <UpdateEventModal event={event} setOpenModal={setOpenModal} openModal={openModal} ></UpdateEventModal>
+      <DeleteEventModal deleteEvent={deleteEvent} openDeleteModal={openDeleteModal}setOpenDeleteModal={setOpenDeleteModal} ></DeleteEventModal>
     </div>
   );
 };

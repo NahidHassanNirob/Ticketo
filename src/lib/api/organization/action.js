@@ -11,3 +11,4 @@ export const updateOrganization=async(data,id)=>{
     const res= await serverMutation(`api/organization/${id}`,"PATCH",data)
     return res;
 }
+

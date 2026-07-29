@@ -1,4 +1,3 @@
-import toast from "react-hot-toast";
 import { baseUrl } from "./baseUrl";
 
 export const serverMutation = async (path, method, data) => {
@@ -14,7 +13,7 @@ export const serverMutation = async (path, method, data) => {
 
 export const serverFetch = async (path) => {
   const res = await fetch(`${baseUrl}/${path}`, {
-    cache:"no-store",
+    cache: "no-store",
   });
   return res.json();
 };
